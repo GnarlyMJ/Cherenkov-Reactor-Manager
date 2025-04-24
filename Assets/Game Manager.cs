@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,10 +9,12 @@ public class GameManager : MonoBehaviour
 {
     [Header("Fuel")]
     [SerializeField] Slider fuelSlider;
+    [SerializeField] Slider fuelComsuptionSlider;
     [SerializeField] float maxFuel = 5000f;
     [SerializeField] float fuelLevel = 0f;
     [SerializeField] float addFuelAmount = 75.0f;
-    [SerializeField] float comsumptionRateFuel = 50.0f;
+    [SerializeField] float comsumptionRateFuelMax = 100.0f;
+    [SerializeField] float comsumptionRateFuelMin = 25.0f;
 
     [Header("Coolent")]
     [SerializeField] Slider coolentSlider;
@@ -23,7 +26,6 @@ public class GameManager : MonoBehaviour
     [Header("Power")]
     [SerializeField] Slider powerSlider;
     [SerializeField] TMP_Text powerText;
-    [SerializeField] float quota = 100;
     [SerializeField] float genPower;
     [SerializeField] float genPowerRate = .5f;
 
@@ -33,12 +35,27 @@ public class GameManager : MonoBehaviour
     [SerializeField] float coolThreshold = 9000.0f;
     [SerializeField] float heatThreshold = 200.0f;
 
+    [Header("Day Manager")]
+    [SerializeField] float quota = 0;
+    [SerializeField] int dayNum = 0;
+    [SerializeField] float dayLength = 24; //Minutes
+    [SerializeField] float curTime = 0;
+
     // Start is called before the first frame update
     void Start()
     {
         fuelSlider.maxValue = maxFuel;
         coolentSlider.maxValue = maxCoolent;
-        powerSlider.maxValue = quota;
+        powerSlider.maxValue = calcQuota();
+
+        fuelComsuptionSlider.maxValue = comsumptionRateFuelMax;
+        fuelComsuptionSlider.minValue = comsumptionRateFuelMin;
+    }
+
+    float calcQuota()
+    {
+        quota = quota + ((dayNum * 5)+100);
+        return quota;
     }
 
     // Update is called once per frame
@@ -49,6 +66,7 @@ public class GameManager : MonoBehaviour
     void FixedUpdate()
     {
         updateSliders();
+        timer();
         if (fuelLevel > 0){updatePower();}
         if (fuelLevel < 0){fuelLevel = 0;}
         if (coolentLevel < 0){coolentLevel = 0;}
@@ -64,9 +82,9 @@ public class GameManager : MonoBehaviour
 
     void updatePower()
     {
-        fuelLevel -= comsumptionRateFuel * Time.deltaTime;
+        fuelLevel -= fuelComsuptionSlider.value * Time.deltaTime;
         coolentLevel -= comsumptionRateCoolent * Time.deltaTime;
-        genPower += (temperatrue * temperatrueModifier) * genPowerRate;
+        genPower += (((temperatrue * temperatrueModifier) * fuelComsuptionSlider.value) * genPowerRate) * Time.deltaTime;
     }
 
     void updateSliders()
@@ -77,6 +95,25 @@ public class GameManager : MonoBehaviour
         string powerString = "Power "+genPower+"/"+quota;
         powerText.text = powerString;
     }
+
+    void timer()
+    {
+        curTime += Time.deltaTime;
+        if(curTime >= dayLength * 60){dayEnd();}
+    }    
+
+    void dayEnd()
+    {
+        if(genPower >= quota)
+        {
+            genPower = 0;
+            quota = calcQuota();
+        }
+        else{gameOver();}
+    }
+
+    void gameOver()
+    {}
 
     public void addFuel()
     {
