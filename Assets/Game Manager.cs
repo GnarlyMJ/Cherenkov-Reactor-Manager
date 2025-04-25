@@ -38,14 +38,19 @@ public class GameManager : MonoBehaviour
     [Header("Day Manager")]
     [SerializeField] float quota = 0;
     [SerializeField] int dayNum = 0;
-    [SerializeField] float dayLength = 24; //Minutes
-    [SerializeField] float curTime = 0;
 
     [Header("Game Over")]
     [SerializeField] GameObject gameOverScreen;
     [SerializeField] GameObject highscoreText;
     [SerializeField] TMP_Text dayText;
     [SerializeField] int highScore = 0;
+
+    [Header("Clock")]
+    [SerializeField] Slider clockSlider;
+    [SerializeField] TMP_Text clockText;
+    [SerializeField] int startTime = 9;
+    [SerializeField] float dayLength = 24; //Minutes
+    [SerializeField] float curTime = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -56,11 +61,14 @@ public class GameManager : MonoBehaviour
 
         fuelComsuptionSlider.maxValue = comsumptionRateFuelMax;
         fuelComsuptionSlider.minValue = comsumptionRateFuelMin;
+
+        clockText.text = startTime + ":00" + "am";
+        clockSlider.maxValue = dayLength*60;
     }
 
     float calcQuota()
     {
-        quota = quota + ((dayNum * 5)+100);
+        quota = quota + ((dayNum * 5) + 100);
         return quota;
     }
 
@@ -73,9 +81,9 @@ public class GameManager : MonoBehaviour
     {
         updateSliders();
         timer();
-        if (fuelLevel > 0){updatePower();}
-        if (fuelLevel < 0){fuelLevel = 0;}
-        if (coolentLevel < 0){coolentLevel = 0;}
+        if (fuelLevel > 0) { updatePower(); }
+        if (fuelLevel < 0) { fuelLevel = 0; }
+        if (coolentLevel < 0) { coolentLevel = 0; }
         if (coolentLevel > coolThreshold)
         {
             temperatrue -= temperatrue * temperatrueModifier;
@@ -98,41 +106,61 @@ public class GameManager : MonoBehaviour
         fuelSlider.value = fuelLevel;
         coolentSlider.value = coolentLevel;
         powerSlider.value = genPower;
-        string powerString = "Power "+genPower+"/"+quota;
+        string powerString = "Power " + genPower + "/" + quota;
         powerText.text = powerString;
     }
 
     void timer()
     {
         curTime += Time.deltaTime;
-        if(curTime >= dayLength * 60){dayEnd();}
-    }    
+        updateClock();
+        if (curTime >= dayLength * 60) { dayEnd(); }
+    }
+
+    void updateClock()
+    {
+        clockSlider.value = curTime;
+        float hours  = (curTime/60) + startTime;
+        if (hours >= 13)
+        {
+            hours -= 12;
+        }
+        string timeString = "";
+        int minutes = (int)((hours - (int)hours) * 60);
+        if(minutes >= 10){timeString = (int)hours+":"+minutes+" am";}
+        else{timeString = (int)hours + ":0" + minutes + " am";}
+        clockText.text = timeString;
+    }
 
     void dayEnd()
     {
-        if(genPower >= quota)
+        if (genPower >= quota)
         {
             genPower = 0;
             curTime = 0;
             powerSlider.maxValue = calcQuota();
         }
-        else{gameOver();}
+        else { gameOver(); }
     }
 
     void gameOver()
     {
         gameOverScreen.SetActive(true);
         dayText.text = "Days: " + dayNum;
-        if(dayNum > highScore){highscoreText.SetActive(true);}
+        if (dayNum > highScore)
+        {
+            highscoreText.SetActive(true);
+            highScore = dayNum;
+        }
     }
 
     public void addFuel()
     {
-        fuelLevel+=addFuelAmount;
+        fuelLevel += addFuelAmount;
     }
 
     public void addCoolent()
     {
-        coolentLevel+=addCoolentAmount;
+        coolentLevel += addCoolentAmount;
     }
 }
