@@ -41,6 +41,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] float dayLength = 24; //Minutes
     [SerializeField] float curTime = 0;
 
+    [Header("Game Over")]
+    [SerializeField] GameObject gameOverScreen;
+    [SerializeField] GameObject highscoreText;
+    [SerializeField] TMP_Text dayText;
+    [SerializeField] int highScore = 0;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -107,13 +113,18 @@ public class GameManager : MonoBehaviour
         if(genPower >= quota)
         {
             genPower = 0;
-            quota = calcQuota();
+            curTime = 0;
+            powerSlider.maxValue = calcQuota();
         }
         else{gameOver();}
     }
 
     void gameOver()
-    {}
+    {
+        gameOverScreen.SetActive(true);
+        dayText.text = "Days: " + dayNum;
+        if(dayNum > highScore){highscoreText.SetActive(true);}
+    }
 
     public void addFuel()
     {
